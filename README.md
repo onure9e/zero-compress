@@ -155,6 +155,18 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 
 MIT - see LICENSE file for details
 
+## Repository
+
+[GitHub Repository](https://github.com/onure9e/zero-compress)
+
+## Contributing
+
+Contributions are welcome! Please feel free to submit a Pull Request.
+
+## License
+
+MIT - see LICENSE file for details
+
 ## Author
 
 onure9e
