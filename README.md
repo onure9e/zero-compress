@@ -147,6 +147,14 @@ input.pipe(gzip).pipe(output);
 
 MIT
 
+## Contributing
+
+Contributions are welcome! Please feel free to submit a Pull Request.
+
+## License
+
+MIT - see LICENSE file for details
+
 ## Author
 
 onure9e
