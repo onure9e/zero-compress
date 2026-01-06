@@ -1,0 +1,63 @@
+{
+  "name": "@onurege3467/zero-compress",
+  "version": "1.0.0",
+  "description": "Drop-in replacement for Node.js zlib with enhanced async support, stream utilities, and file operations",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "bin": {
+    "zero-compress": "./dist/bin/cli.js"
+  },
+  "files": [
+    "dist"
+  ],
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "require": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "scripts": {
+    "build": "tsc && terser dist/**/*.js -o dist/**/*.min.js --compress --mangle",
+    "clean": "rm -rf dist",
+    "prebuild": "npm run clean",
+    "prepublishOnly": "npm run build",
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage",
+    "docs": "typedoc src --out docs --excludePrivate"
+  },
+  "keywords": [
+    "compression",
+    "zlib",
+    "gzip",
+    "deflate",
+    "nodejs",
+    "typescript",
+    "async",
+    "streams"
+  ],
+  "author": "onure9e",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/onure9e/zero-compress"
+  },
+  "bugs": {
+    "url": "https://github.com/onure9e/zero-compress/issues"
+  },
+  "homepage": "https://github.com/onure9e/zero-compress#readme",
+  "engines": {
+    "node": ">=16.0.0"
+  },
+  "devDependencies": {
+    "@types/jest": "^29.5.11",
+    "@types/node": "^20.11.0",
+    "commander": "^11.1.0",
+    "jest": "^29.7.0",
+    "terser": "^5.27.0",
+    "ts-jest": "^29.1.1",
+    "typedoc": "^0.25.13",
+    "typescript": "^5.3.3"
+  }
+}
