@@ -40,12 +40,15 @@ describe('Zlib Compatibility', () => {
 
   test('should be able to use gzip function', async () => {
     const testData = 'Hello World';
-    const compressed = await new Promise<Buffer>((resolve, reject) => {
-      zeroCompress.gzip(Buffer.from(testData), (err, result) => {
-        if (err) reject(err);
-        else resolve(result);
-      });
-    });
+    const compressed = await zeroCompress.gzip(Buffer.from(testData));
+
+    expect(compressed).toBeInstanceOf(Buffer);
+    expect(compressed.length).toBeGreaterThan(0);
+  });
+
+  test('should be able to use gzipSync function', () => {
+    const testData = 'Hello World';
+    const compressed = zeroCompress.gzipSync(Buffer.from(testData));
 
     expect(compressed).toBeInstanceOf(Buffer);
     expect(compressed.length).toBeGreaterThan(0);

@@ -3,7 +3,7 @@ import { gzipAsync, gunzipAsync, compressFile, decompressFile, createGzip, creat
 
 describe('Integration Comprehensive Tests', () => {
   describe('Cross-API Compatibility', () => {
-    const testData = Buffer.from('Integration testing data for cross-API compatibility.');
+    const testData = Buffer.from(Array.from({ length: 1000 }, () => Math.floor(Math.random() * 256))); // Random data for testing
 
     test('sync and async should produce same results', async () => {
       const syncCompressed = zlib.gzipSync(testData);

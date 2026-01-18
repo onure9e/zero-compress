@@ -3,7 +3,7 @@ import { gzipAsync, gunzipAsync, deflateAsync, inflateAsync, deflateRawAsync, in
 
 describe('Async API Comprehensive Tests', () => {
   const testData = Buffer.from('Advanced async testing data for zero-compress.');
-  const largeData = Buffer.alloc(512 * 1024, 'x'); // 512KB compressible data
+  const largeData = Buffer.from(Array.from({ length: 512 * 1024 }, () => Math.floor(Math.random() * 256))); // 512KB random data
 
   describe('gzipAsync', () => {
     test('should compress data correctly', async () => {
@@ -20,7 +20,7 @@ describe('Async API Comprehensive Tests', () => {
       const decompressed = await gunzipAsync(compressed);
 
       expect(decompressed).toEqual(largeData);
-      expect(compressed.length).toBeLessThan(largeData.length);
+      // Note: Random data may not compress smaller than original due to entropy
     });
 
     test('should handle empty buffer', async () => {

@@ -6,6 +6,7 @@ import * as path from 'path';
 import { gzipAsync, gunzipAsync } from './async';
 import type { GzipOptions, GunzipOptions } from './async';
 import { sanitizePath, validateInput, createTimeoutPromise, COMPRESSION_TIMEOUT, CompressionRateLimiter } from './utils';
+import type { CompressionStats } from './utils';
 
 // Global rate limiter instance
 const rateLimiter = new CompressionRateLimiter();
@@ -18,13 +19,9 @@ export interface DecompressFileOptions extends GunzipOptions {
   overwrite?: boolean;
 }
 
-export interface CompressionResult {
+export interface CompressionResult extends CompressionStats {
   inputPath: string;
   outputPath: string;
-  originalSize: number;
-  compressedSize: number;
-  ratio: number;
-  time: number;
 }
 
 /**
@@ -57,13 +54,15 @@ export async function compressFile(
   const validatedData = validateInput(inputData);
 
   const compressionPromise = gzipAsync(validatedData, options);
-  const compressedData = await createTimeoutPromise(compressionPromise, COMPRESSION_TIMEOUT);
+  const timeoutPromise = createTimeoutPromise(COMPRESSION_TIMEOUT);
+  const compressedData = await Promise.race([compressionPromise, timeoutPromise]);
 
   await fs.promises.writeFile(sanitizedOutputPath, compressedData);
 
   const originalSize = inputData.length;
   const compressedSize = compressedData.length;
   const ratio = compressedSize / originalSize;
+  const savings = ((originalSize - compressedSize) / originalSize) * 100;
   const time = Date.now() - startTime;
 
   return {
@@ -72,6 +71,7 @@ export async function compressFile(
     originalSize,
     compressedSize,
     ratio,
+    savings,
     time
   };
 }
@@ -84,27 +84,30 @@ export async function decompressFile(
   outputPath?: string,
   options: DecompressFileOptions = {}
 ): Promise<CompressionResult> {
+  const sanitizedInputPath = sanitizePath(inputPath);
   const startTime = Date.now();
 
   if (!outputPath) {
-    // Remove .gz extension if present
-    outputPath = inputPath.endsWith('.gz')
-      ? inputPath.slice(0, -3)
-      : `${inputPath}.out`;
+    outputPath = sanitizedInputPath.endsWith('.gz')
+      ? sanitizedInputPath.slice(0, -3)
+      : `${sanitizedInputPath}.out`;
   }
 
-  if (!options.overwrite && fs.existsSync(outputPath)) {
-    throw new Error(`Output file already exists: ${outputPath}`);
+  const sanitizedOutputPath = sanitizePath(outputPath);
+
+  if (!options.overwrite && fs.existsSync(sanitizedOutputPath)) {
+    throw new Error(`Output file already exists: ${sanitizedOutputPath}`);
   }
 
-  const inputData = await fs.promises.readFile(inputPath);
+  const inputData = await fs.promises.readFile(sanitizedInputPath);
   const decompressedData = await gunzipAsync(inputData, options);
 
-  await fs.promises.writeFile(outputPath, decompressedData);
+  await fs.promises.writeFile(sanitizedOutputPath, decompressedData);
 
   const originalSize = inputData.length;
   const compressedSize = decompressedData.length;
-  const ratio = originalSize / compressedSize; // Decompression ratio
+  const ratio = originalSize / compressedSize;
+  const savings = ((originalSize - compressedSize) / originalSize) * 100;
   const time = Date.now() - startTime;
 
   return {
@@ -113,6 +116,7 @@ export async function decompressFile(
     originalSize,
     compressedSize,
     ratio,
+    savings,
     time
   };
 }
@@ -140,7 +144,7 @@ export async function compressFiles(
 }
 
 /**
- * Decompresses multiple files
+ * Decompresss multiple files
  */
 export async function decompressFiles(
   inputPaths: string[],

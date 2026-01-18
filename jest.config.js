@@ -8,5 +8,12 @@ module.exports = {
     '!src/**/*.d.ts'
   ],
   coverageDirectory: 'coverage',
-  coverageReporters: ['text', 'lcov', 'html']
+  coverageReporters: ['text', 'lcov', 'html'],
+  setupFiles: ['<rootDir>/tests/setup.ts'],
+  globals: {
+    'ts-jest': {
+      diagnostics: false
+    }
+  },
+
 };

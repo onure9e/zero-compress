@@ -406,6 +406,25 @@ Test Coverage: 100% on critical functions
 - **Timeout protection** - 30 second operation limits
 - **Memory limits** - 500MB max memory usage
 
+### Configurable Security Limits
+You can customize security limits via environment variables:
+
+```bash
+# Set max file size to 50MB (default: 100MB)
+export ZERO_COMPRESS_MAX_FILE_SIZE=52428800
+
+# Set max decompressed size to 100MB (default: 200MB)
+export ZERO_COMPRESS_MAX_DECOMPRESSED_SIZE=104857600
+
+# Set max memory usage to 250MB (default: 500MB)
+export ZERO_COMPRESS_MAX_MEMORY_USAGE=262144000
+```
+
+```javascript
+// Or use programmatically
+process.env.ZERO_COMPRESS_MAX_FILE_SIZE = '52428800';
+```
+
 ### Security Best Practices
 ```javascript
 // Always validate input

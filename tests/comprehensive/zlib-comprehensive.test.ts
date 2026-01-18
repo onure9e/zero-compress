@@ -56,19 +56,8 @@ describe('Zlib API Comprehensive Tests', () => {
 
   describe('Async Methods', () => {
     test('gzip should work asynchronously', async () => {
-      const compressed = await new Promise<Buffer>((resolve, reject) => {
-        zeroCompress.gzip(testData, (err, result) => {
-          if (err) reject(err);
-          else resolve(result);
-        });
-      });
-
-      const decompressed = await new Promise<Buffer>((resolve, reject) => {
-        zeroCompress.gunzip(compressed, (err, result) => {
-          if (err) reject(err);
-          else resolve(result);
-        });
-      });
+      const compressed = await zeroCompress.gzip(testData);
+      const decompressed = await zeroCompress.gunzip(compressed);
 
       expect(decompressed).toEqual(testData);
     });
