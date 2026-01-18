@@ -19,14 +19,22 @@ const COMPRESSED_DATA_MIN_SIZE = 100;
 
 function calculateEntropy(buffer: Buffer): number {
   const frequencies = new Float64Array(256);
-  for (let i = 0; i < buffer.length; i++) {
+  
+  // Optimization: Sample data for large buffers instead of checking every byte
+  // This reduces complexity from O(N) to O(1) relative to file size for large files
+  const sampleLimit = 16 * 1024; // 16KB max sample
+  const step = Math.max(1, Math.floor(buffer.length / sampleLimit));
+  let totalSampled = 0;
+
+  for (let i = 0; i < buffer.length; i += step) {
     frequencies[buffer[i]]++;
+    totalSampled++;
   }
 
   let entropy = 0;
   for (let i = 0; i < 256; i++) {
     if (frequencies[i] > 0) {
-      const p = frequencies[i] / buffer.length;
+      const p = frequencies[i] / totalSampled;
       entropy -= p * Math.log2(p);
     }
   }

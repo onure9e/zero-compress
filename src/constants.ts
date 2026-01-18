@@ -2,7 +2,7 @@
 // Centralized configuration values for maintainability
 
 // Compression limits
-export const MAX_CHUNK_SIZE = 64 * 1024 * 1024; // 64MB chunks for streaming
+export const MAX_CHUNK_SIZE = 4 * 1024 * 1024; // 4MB chunks for optimal cache/thread balance
 export const COMPRESSION_TIMEOUT = 30000; // 30 seconds base timeout
 export const COMPRESSION_RATE = 1024 * 1024; // 1MB/s assumed rate
 

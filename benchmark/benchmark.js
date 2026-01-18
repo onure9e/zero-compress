@@ -213,27 +213,47 @@ async function runComprehensiveBenchmark() {
   // Native zlib comparison
   console.log('🏆 Native Zlib Comparison (Balanced Mode):\n');
 
+  const { promisify } = require('util');
+  const nativeGzip = promisify(zlib.gzip);
+  const nativeGunzip = promisify(zlib.gunzip);
+
   for (const size of TEST_FILE_SIZES) {
     const data = generateTestData(size);
     const sizeLabel = `${(size / 1024 / 1024).toFixed(0)}MB`;
 
     process.env.ZERO_COMPRESS_MODE = 'balanced';
-    const zeroCompressed = await gzipAsync(data);
+    
+    // Warmup
+    try { await nativeGzip(data); } catch(e){}
 
     // Zero-Compress balanced
     const zeroGzip = await benchmarkAsyncOperation(gzipAsync, data, 'balanced');
-    const zeroGunzip = await benchmarkAsyncOperation(gunzipAsync, zeroCompressed, 'balanced');
+    const compressedData = await gzipAsync(data);
+    const zeroGunzip = await benchmarkAsyncOperation(gunzipAsync, compressedData, 'balanced');
 
-    // Skip native zlib comparison for now
+    // Native Zlib
+    // We create a wrapper to use same benchmark function, 
+    // passing 'native' as mode just for logging inside the function (it sets env but native ignores it)
+    const zlibGzip = await benchmarkAsyncOperation(nativeGzip, data, 'native');
+    const nativeCompressed = await nativeGzip(data);
+    const zlibGunzip = await benchmarkAsyncOperation(nativeGunzip, nativeCompressed, 'native');
 
     console.log(`${sizeLabel} Data:`);
     console.log(`  Zero-Compress Gzip: ${zeroGzip.avgDuration.toFixed(2)}ms`);
-    console.log(`  Native Zlib Gzip: ${zlibGzip.avgDuration.toFixed(2)}ms`);
-    console.log(`  Overhead: ${(((zeroGzip.avgDuration - zlibGzip.avgDuration) / zlibGzip.avgDuration) * 100).toFixed(2)}%`);
+    console.log(`  Native Zlib Gzip:   ${zlibGzip.avgDuration.toFixed(2)}ms`);
+    
+    const gzipDiff = zeroGzip.avgDuration - zlibGzip.avgDuration;
+    const gzipPercent = (gzipDiff / zlibGzip.avgDuration) * 100;
+    const gzipWinner = gzipDiff < 0 ? 'Zero-Compress' : 'Native Zlib';
+    console.log(`  Winner: ${gzipWinner} (${Math.abs(gzipPercent).toFixed(2)}% ${gzipDiff < 0 ? 'faster' : 'slower'})`);
 
     console.log(`  Zero-Compress Gunzip: ${zeroGunzip.avgDuration.toFixed(2)}ms`);
-    console.log(`  Native Zlib Gunzip: ${zlibGunzip.avgDuration.toFixed(2)}ms`);
-    console.log(`  Overhead: ${(((zeroGunzip.avgDuration - zlibGunzip.avgDuration) / zlibGunzip.avgDuration) * 100).toFixed(2)}%\n`);
+    console.log(`  Native Zlib Gunzip:   ${zlibGunzip.avgDuration.toFixed(2)}ms`);
+    
+    const gunzipDiff = zeroGunzip.avgDuration - zlibGunzip.avgDuration;
+    const gunzipPercent = (gunzipDiff / zlibGunzip.avgDuration) * 100;
+    const gunzipWinner = gunzipDiff < 0 ? 'Zero-Compress' : 'Native Zlib';
+    console.log(`  Winner: ${gunzipWinner} (${Math.abs(gunzipPercent).toFixed(2)}% ${gunzipDiff < 0 ? 'faster' : 'slower'})\n`);
   }
 
   // Save results

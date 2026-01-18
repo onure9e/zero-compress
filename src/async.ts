@@ -4,6 +4,7 @@
 import * as zlib from 'zlib';
 import { promisify } from 'util';
 import { validateInput, validateZlibOptions, getMaxDecompressedSize, COMPRESSION_MODE } from './utils';
+import { parallelCompressor } from './parallel';
 
 // Use util.promisify for better performance than manual Promise constructors
 const gzipPromise = promisify(zlib.gzip);
@@ -34,7 +35,12 @@ const DECOMPRESSION_LIMIT = { maxOutputLength: 200 * 1024 * 1024 };
 
 export const gzipAsync = async (buf: zlib.InputType, options?: zlib.ZlibOptions): Promise<Buffer> => {
   if (COMPRESSION_MODE === 'performance') {
-    return gzipPromise(buf, validateZlibOptions(options));
+    // Force Level 1, memLevel 9 and Z_RLE strategy for maximum throughput
+    const fastOptions = { ...options, level: 1, memLevel: 9, strategy: zlib.constants.Z_RLE };
+    if (Buffer.isBuffer(buf) && buf.length > 1024 * 1024) {
+      return parallelCompressor.compressParallel(buf, fastOptions);
+    }
+    return gzipPromise(buf, validateZlibOptions(fastOptions));
   }
 
   const validatedBuf = validateInput(buf);
@@ -49,6 +55,9 @@ export const gzipAsync = async (buf: zlib.InputType, options?: zlib.ZlibOptions)
 
 export const gunzipAsync = async (buf: zlib.InputType, options?: zlib.ZlibOptions): Promise<Buffer> => {
   if (COMPRESSION_MODE === 'performance') {
+    if (Buffer.isBuffer(buf) && buf.length > 1024 * 1024) {
+      return parallelCompressor.decompressParallel(buf, options);
+    }
     return gunzipPromise(buf, { ...DECOMPRESSION_LIMIT, ...options });
   }
 

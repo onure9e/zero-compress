@@ -13,7 +13,7 @@ const gunzipAsync = promisify(zlib.gunzip);
 const MAX_PARALLEL_CHUNKS = 4096; // Increased limit
 const PARALLEL_MAGIC = 0x50415241;
 const WORKER_IDLE_TIMEOUT = 60000; // 1 minute idle timeout
-const WORKER_POOL_SIZE = Math.max(2, os.cpus().length);
+const WORKER_POOL_SIZE = Math.max(4, os.cpus().length * 2);
 
 // Message types
 interface WorkerMessage {
@@ -45,17 +45,16 @@ if (!isMainThread) {
       
       if (operation === 'compress') {
         const validatedOptions = validateZlibOptions(options);
-        resultBuffer = await gzipAsync(buffer, validatedOptions);
+        // USE SYNC CALLS INSIDE WORKERS TO BYPASS LIBUV THREADPOOL
+        resultBuffer = zlib.gzipSync(buffer, validatedOptions);
       } else {
         const maxSize = getMaxDecompressedSize();
         const baseOptions = { ...validateZlibOptions(options), maxOutputLength: maxSize };
-        resultBuffer = await gunzipAsync(buffer, baseOptions);
+        // USE SYNC CALLS INSIDE WORKERS TO BYPASS LIBUV THREADPOOL
+        resultBuffer = zlib.gunzipSync(buffer, baseOptions);
       }
 
       // Prepare result for zero-copy transfer
-      // We need to ensure the underlying ArrayBuffer is exactly the size of the data
-      // zlib output usually is a fresh buffer, so buffer.buffer is likely exclusive.
-      // But to be safe and ensure optimization:
       const transferBuffer = new Uint8Array(resultBuffer.buffer, resultBuffer.byteOffset, resultBuffer.length);
 
       parentPort!.postMessage({
