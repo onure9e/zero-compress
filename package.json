@@ -1,6 +1,6 @@
 {
   "name": "@onurege3467/zero-compress",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Drop-in replacement for Node.js zlib with enhanced async support, stream utilities, and file operations",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
